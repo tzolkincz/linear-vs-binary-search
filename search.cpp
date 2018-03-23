@@ -6,6 +6,7 @@
 #include <random>
 #include <immintrin.h>
 #include <limits.h>
+#include <chrono>
 
 //little-endian _MM_SHUFFLE
 #define SHUF(i0, i1, i2, i3) (i0 + i1*4 + i2*16 + i3*64)
@@ -512,7 +513,7 @@ int main() {
     //but originally I wanted to benchmark inlined code of every search
     #define TEST_SEARCH(func) \
     { \
-        int start = clock(); \
+	auto begin = std::chrono::high_resolution_clock::now();\
         int check = 0; \
         for (int t = 0; t < TRIES; t++) { \
             int i = (t * DARR + (MEASURE_LATENCY ? check&1 : 0)) & (ARR_SAMPLES - 1); \
@@ -522,8 +523,9 @@ int main() {
             int res = func(arr, n, key); \
             check += res; \
         } \
-        double elapsed = double(clock() - start) / CLOCKS_PER_SEC; \
-        printf("%8.1lf ns : %40s   (%d)\n", 1e+9 * elapsed / TRIES, #func, check); \
+	auto end = std::chrono::high_resolution_clock::now(); \
+	double ns = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(end-begin).count(); \
+        printf("%8.1lf ns : %40s   (%d)\n", ns / TRIES, #func, check); \
     }
 
     //run performance benchmark and print formatted results
@@ -537,7 +539,7 @@ int main() {
 	__m512i a = _mm512_set1_epi32(1);
 	acc = _mm512_add_epi32(acc, a);
     }
-    printf("%d %d\n", acc[0], acc[3]);
+    printf("%lld %lld\n", acc[0], acc[3]);
 
     // TEST_SEARCH(linearX_search_sse);
     // TEST_SEARCH(linear_search_sse);
