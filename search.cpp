@@ -400,15 +400,29 @@ static TESTINLINE int quaternary_search_branchless2 (const int *arr, int n, int 
 }
 
 
+template<intptr_t MAXN>
 static TESTINLINE int linear_search_avx512(const int *arr, int n, int key) {
     int cnt = 0;
     __m512i search = _mm512_set1_epi32(key);
-    for (int i = 0; i < n; i+=16) {
-        __m512i data = _mm512_loadu_si512(&arr[i]); 
-        __mmask16 m = _mm512_cmp_epi32_mask(data, search, _MM_CMPINT_LT);
 
-        cnt += __builtin_popcount(m);
-    }
+    intptr_t i = 0;
+    #define STEP \
+    if (i < MAXN) {\
+        __m512i data = _mm512_loadu_si512(&arr[i]); \
+        __mmask16 m = _mm512_cmp_epi32_mask(data, search, _MM_CMPINT_LT); \
+          \
+        cnt += __builtin_popcount(m); \
+    } i += 16;
+    STEP STEP STEP STEP STEP STEP STEP STEP
+    STEP STEP STEP STEP STEP STEP STEP STEP
+    STEP STEP STEP STEP STEP STEP STEP STEP
+    STEP STEP STEP STEP STEP STEP STEP STEP
+    STEP STEP STEP STEP STEP STEP STEP STEP
+    STEP STEP STEP STEP STEP STEP STEP STEP
+    STEP STEP STEP STEP STEP STEP STEP STEP
+    STEP STEP STEP STEP STEP STEP STEP STEP
+    #undef STEP
+
     return cnt;
 }
 
@@ -473,7 +487,7 @@ int main() {
         res[sk++] = binary_search_branchlessS(arr, n, key);
         res[sk++] = binary_search_branchless_pre(arr, n, key);
         res[sk++] = quaternary_search_branchless(arr, n, key);
-        res[sk++] = linear_search_avx512(arr, n, key);
+        res[sk++] = linear_search_avx512<SIZE>(arr, n, key);
 
         //program terminates if any search gives different answer
         for (int i = 1; i < sk; i++)
@@ -545,7 +559,7 @@ int main() {
 
     TEST_SEARCH(binary_search_branchless_pre);
     TEST_SEARCH(quaternary_search_branchless);
-    TEST_SEARCH(linear_search_avx512);
+    TEST_SEARCH(linear_search_avx512<SIZE>);
 
     return 0;
 }
