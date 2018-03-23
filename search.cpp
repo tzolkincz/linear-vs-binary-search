@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <random>
 #include <immintrin.h>
-#include <intrin.h>
+#include <limits.h>
 
 //little-endian _MM_SHUFFLE
 #define SHUF(i0, i1, i2, i3) (i0 + i1*4 + i2*16 + i3*64)

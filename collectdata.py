@@ -19,8 +19,8 @@ def CollectData(N, mem):
     os.system(bat)
 
     logname = "res_%04d_%d.log" % (N, mem)
-    os.system("search_tmp >res/" + logname)
-    os.system("search_tmp >res/" + logname)
+    os.system("./search > res/" + logname)
+    os.system("./search > res/" + logname)
 
 
 for fn in glob.glob("res/*"):
