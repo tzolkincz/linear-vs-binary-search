@@ -402,7 +402,7 @@ static TESTINLINE int quaternary_search_branchless2 (const int *arr, int n, int 
 
 static TESTINLINE int linear_search_avx512(const int *arr, int n, int key) {
     int cnt = 0;
-    __m512i search = _mm512_set1_epi16(key);
+    __m512i search = _mm512_set1_epi32(key);
     for (int i = 0; i < n; i+=16) {
         __m512i data = _mm512_loadu_si512(&arr[i]); 
         __mmask16 m = _mm512_cmp_epi32_mask(data, search, _MM_CMPINT_LT);
@@ -473,6 +473,7 @@ int main() {
         res[sk++] = binary_search_branchlessS(arr, n, key);
         res[sk++] = binary_search_branchless_pre(arr, n, key);
         res[sk++] = quaternary_search_branchless(arr, n, key);
+        res[sk++] = linear_search_avx512(arr, n, key);
 
         //program terminates if any search gives different answer
         for (int i = 1; i < sk; i++)
@@ -515,6 +516,15 @@ int main() {
     //TEST_SEARCH(linearX_search_scalar);
     TEST_SEARCH(linear_search_scalar);
 
+
+    //warm-up vector ports - http://www.agner.org/optimize/blog/read.php?i=415&v=t
+    __m512i acc = _mm512_set1_epi32(0);
+    for (int i = 0; i < 1000000; i++) {
+	__m512i a = _mm512_set1_epi32(1);
+	acc = _mm512_add_epi32(acc, a);
+    }
+    printf("%d %d\n", acc[0], acc[3]);
+
     // TEST_SEARCH(linearX_search_sse);
     // TEST_SEARCH(linear_search_sse);
     // TEST_SEARCH(linear_search_sse_UR<SIZE>);
@@ -535,6 +545,7 @@ int main() {
 
     TEST_SEARCH(binary_search_branchless_pre);
     TEST_SEARCH(quaternary_search_branchless);
+    TEST_SEARCH(linear_search_avx512);
 
     return 0;
 }
