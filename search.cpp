@@ -399,6 +399,19 @@ static TESTINLINE int quaternary_search_branchless2 (const int *arr, int n, int 
     return pos + 1;
 }
 
+
+static TESTINLINE int linear_search_avx512(const int *arr, int n, int key) {
+    int cnt = 0;
+    __m512i search = _mm512_set1_epi16(key);
+    for (int i = 0; i < n; i+=16) {
+        __m512i data = _mm512_loadu_si512(&arr[i]); 
+        __mmask16 m = _mm512_cmp_epi32_mask(data, search, _MM_CMPINT_LT);
+
+        cnt += __builtin_popcount(m);
+    }
+    return cnt;
+}
+
 //======================= testing code =======================
 
 //length of each input array (including one sentinel element)
@@ -415,7 +428,7 @@ static const int KEY_SAMPLES = (4<<10);
 int n = SIZE - 1;
 
 //input arrays for search (aligned for AVX)
-ALIGN(32) int input[ARR_SAMPLES][SIZE];
+ALIGN(64) int input[ARR_SAMPLES][SIZE];
 //keys to be searched
 int keys[KEY_SAMPLES];
 
@@ -443,10 +456,10 @@ int main() {
 
         int res[32], sk = 0;
         //res[sk++] = linearX_search_scalar(arr, n, key);
-        //res[sk++] = linear_search_scalar(arr, n, key);
-        res[sk++] = linearX_search_sse(arr, n, key);
-        res[sk++] = linear_search_sse(arr, n, key);
-        res[sk++] = linear_search_sse_UR<SIZE>(arr, n, key);
+        res[sk++] = linear_search_scalar(arr, n, key);
+        // res[sk++] = linearX_search_sse(arr, n, key);
+        // res[sk++] = linear_search_sse(arr, n, key);
+        // res[sk++] = linear_search_sse_UR<SIZE>(arr, n, key);
         res[sk++] = linear_search_avx(arr, n, key);
         res[sk++] = linear_search_avx_UR<SIZE>(arr, n, key);
         res[sk++] = binary_search_std(arr, n, key);
@@ -500,11 +513,11 @@ int main() {
 
     //run performance benchmark and print formatted results
     //TEST_SEARCH(linearX_search_scalar);
-    //TEST_SEARCH(linear_search_scalar);
+    TEST_SEARCH(linear_search_scalar);
 
-    TEST_SEARCH(linearX_search_sse);
-    TEST_SEARCH(linear_search_sse);
-    TEST_SEARCH(linear_search_sse_UR<SIZE>);
+    // TEST_SEARCH(linearX_search_sse);
+    // TEST_SEARCH(linear_search_sse);
+    // TEST_SEARCH(linear_search_sse_UR<SIZE>);
     TEST_SEARCH(linear_search_avx);
     TEST_SEARCH(linear_search_avx_UR<SIZE>);
 
